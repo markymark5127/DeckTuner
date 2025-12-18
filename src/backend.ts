@@ -1,16 +1,32 @@
-import { ServerAPI } from "decky-frontend-lib"
+import { callable } from "@decky/api"
 
-export async function callBackend<T>(
-	serverApi: ServerAPI,
-	method: string,
-	args: Record<string, any> = {}
-): Promise<T> {
-	// Decky callPluginMethod types are a bit loose; cast to keep TS strict-mode happy.
-	const res = await serverApi.callPluginMethod(method, args as any)
-	if (!res.success) {
-		throw new Error(res.result ? JSON.stringify(res.result) : "backend_call_failed")
-	}
-	return res.result as T
+export type ApplyResult = {
+	appid: number
+	dry_run: boolean
+	applied: any[]
+	skipped: any[]
+	failed: any[]
+	messages: string[]
+	restart_required: boolean
 }
 
+export const applyPresetBackend = callable<
+	[appid: number, preset: any, dry_run?: boolean],
+	ApplyResult
+>("apply_preset")
 
+export const discoverPerfProfileStorage = callable<[], any>(
+	"discover_perf_profile_storage"
+)
+
+export const getDeviceInfoBackend = callable<[], any>("get_device_info")
+
+export const recordModeStartBackend = callable<
+	[appid: number, watch_roots: string[]],
+	{ session_id: string; state_path?: string; file_count?: number }
+>("record_mode_start")
+
+export const recordModeStopBackend = callable<
+	[session_id: string],
+	{ session_id: string; changed?: any[]; changed_count?: number; error?: string }
+>("record_mode_stop")

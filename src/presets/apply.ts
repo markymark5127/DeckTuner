@@ -1,18 +1,13 @@
-import { ServerAPI } from "decky-frontend-lib"
-
-import { callBackend } from "../backend"
+import {
+	applyPresetBackend,
+	discoverPerfProfileStorage,
+	getDeviceInfoBackend,
+	recordModeStartBackend,
+	recordModeStopBackend,
+	type ApplyResult,
+} from "../backend"
 import { PluginSettings } from "../context"
 import { Preset } from "./types"
-
-type ApplyResult = {
-	appid: number
-	dry_run: boolean
-	applied: any[]
-	skipped: any[]
-	failed: any[]
-	messages: string[]
-	restart_required: boolean
-}
 
 // SteamClient performance APIs are private/non-typed; keep calls guarded.
 async function tryApplySteamOsViaSteamClient(appid: number, preset: Preset): Promise<string[]> {
@@ -88,7 +83,6 @@ async function tryApplySteamOsViaSteamClient(appid: number, preset: Preset): Pro
 }
 
 export async function applyPreset(
-	serverApi: ServerAPI,
 	settings: PluginSettings,
 	appid: number,
 	preset: Preset,
@@ -117,11 +111,7 @@ export async function applyPreset(
 	}
 
 	if (hasGraphicsTargets) {
-		const res = await callBackend<ApplyResult>(serverApi, "apply_preset", {
-			appid,
-			preset,
-			dry_run: dryRun,
-		})
+		const res = await applyPresetBackend(appid, preset as any, dryRun)
 		// merge backend results
 		out.applied.push(...(res.applied ?? []))
 		out.skipped.push(...(res.skipped ?? []))
@@ -133,23 +123,20 @@ export async function applyPreset(
 	return out
 }
 
-export async function discoverSteamOsStorage(serverApi: ServerAPI) {
-	return await callBackend<any>(serverApi, "discover_perf_profile_storage", {})
+export async function discoverSteamOsStorage() {
+	return await discoverPerfProfileStorage()
 }
 
-export async function getDeviceInfo(serverApi: ServerAPI) {
-	return await callBackend<any>(serverApi, "get_device_info", {})
+export async function getDeviceInfo() {
+	return await getDeviceInfoBackend()
 }
 
-export async function recordModeStart(serverApi: ServerAPI, appid: number, watchRoots: string[]) {
-	return await callBackend<any>(serverApi, "record_mode_start", {
-		appid,
-		watch_roots: watchRoots,
-	})
+export async function recordModeStart(appid: number, watchRoots: string[]) {
+	return await recordModeStartBackend(appid, watchRoots)
 }
 
-export async function recordModeStop(serverApi: ServerAPI, sessionId: string) {
-	return await callBackend<any>(serverApi, "record_mode_stop", { session_id: sessionId })
+export async function recordModeStop(sessionId: string) {
+	return await recordModeStopBackend(sessionId)
 }
 
 

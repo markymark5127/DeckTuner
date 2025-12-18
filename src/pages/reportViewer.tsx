@@ -4,7 +4,8 @@ import {
 	PanelSection,
 	PanelSectionRow,
 	Router,
-} from "decky-frontend-lib"
+} from "@decky/ui"
+import { toaster } from "@decky/api"
 import { useContext, useEffect, useState } from "react"
 
 import BackButton from "../components/backButton"
@@ -35,8 +36,7 @@ import { SDHQHeader, SDHQReport, SDHQReportElement } from "./sdhqReport"
 import { uploadPresetToService } from "../sharing/service"
 
 const GameReports = () => {
-	const { selectedGame, setSelectedGame, serverApi } =
-		useContext(ShareDeckContext)
+	const { selectedGame, setSelectedGame } = useContext(ShareDeckContext)
 	const [loadingSharedeck, setLoadingSharedeck] = useState(true)
 	const [loadingSDHQ, setLoadingSDHQ] = useState(true)
 	const [sdhqReport, setSdhqReport] = useState<SDHQReport | null>(null)
@@ -63,13 +63,12 @@ const GameReports = () => {
 	const [recordResults, setRecordResults] = useState<any[] | null>(null)
 
 	useEffect(() => {
-		if (!serverApi) return
 		if (typeof selectedGame?.appId === "number") {
-			getReports(selectedGame.appId, serverApi).then((res) => {
+			getReports(selectedGame.appId).then((res) => {
 				if (res !== undefined) setReports(res)
 				setLoadingSharedeck(false)
 			})
-			getSDHQReview(selectedGame.appId, serverApi, [
+			getSDHQReview(selectedGame.appId, [
 				"acf.optimized_and_recommended_settings.steamos_settings",
 				"link",
 				"acf.optimized_and_recommended_settings.proton_version",
@@ -82,7 +81,6 @@ const GameReports = () => {
 			})
 
 			fetchCuratedPresets(
-				serverApi,
 				selectedGame.appId,
 				userSettings.presetCdnBaseUrl
 			).then(({ doc, source }) => {
@@ -160,7 +158,7 @@ const GameReports = () => {
 					{selectedGame?.title}
 				</h2>
 			</PanelSectionRow>
-			{typeof selectedGame?.appId === "number" && serverApi ? (
+			{typeof selectedGame?.appId === "number" ? (
 				<PanelSection title="DeckTuner Presets">
 					<PanelSectionRow>
 						<div style={{ width: "100%" }}>
@@ -240,13 +238,12 @@ const GameReports = () => {
 							onClick={async () => {
 								if (!effectivePreset) return
 								const r = await applyPreset(
-									serverApi,
 									userSettings,
 									selectedGame.appId!,
 									effectivePreset,
 									false
 								)
-								serverApi.toaster.toast({
+									toaster.toast({
 									title: "Preset applied",
 									body:
 										r.restart_required
@@ -272,7 +269,7 @@ const GameReports = () => {
 									presetCategory,
 									effectivePreset
 								)
-								serverApi.toaster.toast({
+									toaster.toast({
 									title: "Saved override",
 									body: "This preset is now pinned locally for this category.",
 									playSound: true,
@@ -306,7 +303,7 @@ const GameReports = () => {
 								)
 								setEffectivePreset(res.preset)
 								setPresetSource(res.source)
-								serverApi.toaster.toast({
+									toaster.toast({
 									title: "Override cleared",
 									body: "Reverted to curated preset (if available).",
 									playSound: true,
@@ -336,7 +333,7 @@ const GameReports = () => {
 											2
 										)
 									)
-									serverApi.toaster.toast({
+									toaster.toast({
 										title: "Copied",
 										body: "Preset JSON copied to clipboard.",
 										playSound: true,
@@ -344,7 +341,7 @@ const GameReports = () => {
 										eType: 0,
 									})
 								} catch (e: any) {
-									serverApi.toaster.toast({
+									toaster.toast({
 										title: "Copy failed",
 										body:
 											e?.message ??
@@ -364,7 +361,7 @@ const GameReports = () => {
 							layout="below"
 							onClick={() => {
 								const url =
-									SHAREDECK_NEW_REPORT_URL.replaceAll(
+											SHAREDECK_NEW_REPORT_URL.replace(
 										"${appid}",
 										selectedGame.appId!.toString()
 									)
@@ -399,7 +396,6 @@ const GameReports = () => {
 										if (!effectivePreset) return
 										try {
 											await uploadPresetToService(
-												serverApi,
 												userSettings.serviceBaseUrl,
 												{
 													appid: selectedGame.appId!,
@@ -408,7 +404,7 @@ const GameReports = () => {
 													source: presetSource,
 												}
 											)
-											serverApi.toaster.toast({
+											toaster.toast({
 												title: "Uploaded",
 												body: "Sent preset to DeckTuner service.",
 												playSound: true,
@@ -416,7 +412,7 @@ const GameReports = () => {
 												eType: 0,
 											})
 										} catch (e: any) {
-											serverApi.toaster.toast({
+											toaster.toast({
 												title: "Upload failed",
 												body:
 													e?.message ??
@@ -438,10 +434,8 @@ const GameReports = () => {
 							layout="below"
 							onClick={async () => {
 								try {
-									const r = await discoverSteamOsStorage(
-										serverApi
-									)
-									serverApi.toaster.toast({
+									const r = await discoverSteamOsStorage()
+									toaster.toast({
 										title: "Discovery complete",
 										body: `Matches: ${r.matches?.length ?? 0}. See logs for details.`,
 										playSound: true,
@@ -449,7 +443,7 @@ const GameReports = () => {
 										eType: 0,
 									})
 								} catch (e: any) {
-									serverApi.toaster.toast({
+									toaster.toast({
 										title: "Discovery failed",
 										body:
 											e?.message ??
@@ -480,14 +474,10 @@ const GameReports = () => {
 											"~/.config",
 											"~/.local/share",
 										]
-										const r = await recordModeStart(
-											serverApi,
-											appid,
-											roots
-										)
+										const r = await recordModeStart(appid, roots)
 										setRecordSessionId(r.session_id)
 										setRecordResults(null)
-										serverApi.toaster.toast({
+										toaster.toast({
 											title: "Record mode started",
 											body: "Change one in-game setting, then stop recording.",
 											playSound: true,
@@ -505,13 +495,10 @@ const GameReports = () => {
 									disabled={!recordSessionId}
 									onClick={async () => {
 										if (!recordSessionId) return
-										const r = await recordModeStop(
-											serverApi,
-											recordSessionId
-										)
+										const r = await recordModeStop(recordSessionId)
 										setRecordResults(r.changed ?? [])
 										setRecordSessionId(null)
-										serverApi.toaster.toast({
+										toaster.toast({
 											title: "Record mode stopped",
 											body: `Changed files: ${r.changed_count ?? 0}`,
 											playSound: true,
@@ -658,7 +645,7 @@ const GameReports = () => {
 												presetCategory,
 												nextPreset
 											)
-											serverApi.toaster.toast({
+											toaster.toast({
 												title: "Mapping attached",
 												body: "Saved as a local override with a generated graphics target.",
 												playSound: true,

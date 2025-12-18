@@ -3,7 +3,7 @@ import {
 	PanelSection,
 	PanelSectionRow,
 	ToggleField,
-} from "decky-frontend-lib"
+} from "@decky/ui"
 import React, { useContext, useState } from "react"
 
 import BackButton from "../components/backButton"
@@ -12,7 +12,7 @@ import { getSettings, sendSDHQToast, sendShareDeckToast } from "../requests"
 
 const SettingsPage = () => {
 	const [currentSettings, setCurrentSettings] = useState(() => getSettings())
-	const { serverApi, setShowSettings } = useContext(ShareDeckContext)
+	const { setShowSettings } = useContext(ShareDeckContext)
 
 	const updateSetting = (label: keyof PluginSettings, value: any) => {
 		const next = { ...currentSettings, [label]: value } as PluginSettings
@@ -21,9 +21,8 @@ const SettingsPage = () => {
 	}
 
 	const sendToasts = () => {
-		if (!serverApi) return
-		if (currentSettings.showShareDeckToasts) sendShareDeckToast(serverApi)
-		if (currentSettings.showSDHQToasts) sendSDHQToast(serverApi)
+		if (currentSettings.showShareDeckToasts) sendShareDeckToast()
+		if (currentSettings.showSDHQToasts) sendSDHQToast()
 	}
 
 	return (
@@ -128,13 +127,11 @@ const SettingsPage = () => {
 						onChange={(n) => updateSetting("showAlways", !n)}
 					/>
 				</PanelSectionRow>
-				{serverApi ? (
-					<PanelSectionRow>
-						<ButtonItem layout="below" onClick={() => sendToasts()}>
-							Test Notifications
-						</ButtonItem>
-					</PanelSectionRow>
-				) : null}
+				<PanelSectionRow>
+					<ButtonItem layout="below" onClick={() => sendToasts()}>
+						Test Notifications
+					</ButtonItem>
+				</PanelSectionRow>
 			</PanelSection>
 		</React.Fragment>
 	)

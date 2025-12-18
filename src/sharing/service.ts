@@ -1,7 +1,6 @@
-import { ServerAPI } from "decky-frontend-lib"
+import { fetchNoCors } from "@decky/api"
 
 export async function uploadPresetToService(
-	serverApi: ServerAPI,
 	serviceBaseUrl: string,
 	payload: any
 ): Promise<void> {
@@ -9,13 +8,13 @@ export async function uploadPresetToService(
 	const url = `${base}/api/presets`
 
 	// Use Decky's fetchNoCors (same pattern as ShareDeck fetch) to avoid CORS headaches.
-	const res = await serverApi.fetchNoCors<{ body: string }>(url, {
+	const res = await fetchNoCors(url, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(payload),
 	})
 
-	if (!res.success) {
+	if (!res.ok) {
 		throw new Error("upload_failed")
 	}
 }

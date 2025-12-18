@@ -1,4 +1,4 @@
-import { PanelSection } from "decky-frontend-lib"
+import { PanelSection } from "@decky/ui"
 const LoadingPanel = () => <PanelSection spinner title="Loading..." />
 
 export default LoadingPanel

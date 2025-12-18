@@ -1,4 +1,4 @@
-import { ServerAPI } from "decky-frontend-lib"
+import { fetchNoCors } from "@decky/api"
 
 import { CuratedPresetsDocV1 } from "./types"
 
@@ -22,7 +22,6 @@ const cacheSet = (key: string, value: any) => {
 }
 
 export async function fetchCuratedPresets(
-	serverApi: ServerAPI,
 	appid: number,
 	baseUrl: string,
 	ttlMs: number = 6 * 60 * 60 * 1000
@@ -34,14 +33,14 @@ export async function fetchCuratedPresets(
 	}
 
 	const url = `${baseUrl.replace(/\/$/, "")}/presets/${appid}.json`
-	const res = await serverApi.fetchNoCors<{ body: string }>(url, { method: "GET" })
-	if (!res.success) {
+	const res = await fetchNoCors(url, { method: "GET" })
+	if (!res.ok) {
 		if (cached) return { doc: cached.value, source: "cache" }
 		return { doc: null, source: "none" }
 	}
 
 	try {
-		const doc = JSON.parse(res.result.body) as CuratedPresetsDocV1
+		const doc = JSON.parse(await res.text()) as CuratedPresetsDocV1
 		cacheSet(cacheKey, { value: doc, cachedAt: Date.now() })
 		return { doc, source: "network" }
 	} catch {
