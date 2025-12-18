@@ -1,4 +1,4 @@
-import { definePlugin, ServerAPI, staticClasses } from "decky-frontend-lib"
+import { ServerAPI, staticClasses } from "decky-frontend-lib"
 import { useContext, useEffect } from "react"
 import { FaCogs } from "react-icons/fa"
 
@@ -37,7 +37,7 @@ const ShareDecky = ({ serverApi }: { serverApi: ServerAPI }) => {
 	return <GameReports />
 }
 
-export default definePlugin((serverApi: ServerAPI) => {
+export default (serverApi: ServerAPI) => {
 	const onGameChange =
 		SteamClient.GameSessions.RegisterForAppLifetimeNotifications(
 			// Using GameSessions.Register... because Apps.RegisterForGameActionStart
@@ -87,4 +87,4 @@ export default definePlugin((serverApi: ServerAPI) => {
 			onGameChange.unregister()
 		},
 	}
-})
+}
