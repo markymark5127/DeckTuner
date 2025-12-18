@@ -3,6 +3,7 @@ import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
+import * as ts from 'typescript';
 import { defineConfig } from 'rollup';
 import importAssets from 'rollup-plugin-import-assets';
 
@@ -13,7 +14,11 @@ export default defineConfig({
   plugins: [
     commonjs(),
     nodeResolve(),
-    typescript(),
+    // Pass the TypeScript module explicitly to avoid an intermittent runtime lookup issue
+    // where @rollup/plugin-typescript expects a `ModuleKind` enum on the resolved
+    // TypeScript module. This makes builds more deterministic across different
+    // environments (e.g., CI or Steam Deck systems with different TypeScript installs).
+    typescript({ typescript: ts }),
     json(),
     replace({
       preventAssignment: false,

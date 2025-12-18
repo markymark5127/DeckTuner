@@ -27,6 +27,10 @@ export type PluginSettings = {
 	showSDHQToasts: boolean
 	showAlways: boolean
 	showAllApps: boolean
+	presetCdnBaseUrl: string
+	serviceBaseUrl: string
+	enableGraphicsWriter: boolean
+	enableSteamOsApply: boolean
 }
 
 const DEFAULT_CONTEXT: ShareDeckContextType = {

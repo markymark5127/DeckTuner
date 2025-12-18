@@ -2,7 +2,6 @@ import {
 	Navigation,
 	QuickAccessTab,
 	ServerAPI,
-	SideMenu,
 	staticClasses,
 } from "decky-frontend-lib"
 
@@ -69,6 +68,11 @@ export const getSettings = (): PluginSettings => {
 		showSDHQToasts: true,
 		showAlways: false,
 		showAllApps: false,
+		presetCdnBaseUrl:
+			"https://example.invalid/decktuner-presets/v1", // user configurable
+		serviceBaseUrl: "",
+		enableGraphicsWriter: false,
+		enableSteamOsApply: true,
 	})
 }
 
