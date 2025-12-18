@@ -12,9 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
-
-    steps:
+        node-version: [18.x, 20.x]
       - name: Checkout repo
         uses: actions/checkout@v4
 
