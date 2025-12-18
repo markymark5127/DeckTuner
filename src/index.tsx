@@ -75,7 +75,7 @@ export default (serverApi: ServerAPI) => {
 		)
 
 	return {
-		title: <div className={staticClasses.Title}>DeckSettings</div>,
+		title: <div className={staticClasses.Title}>DeckTuner</div>,
 		content: (
 			<ShareDeckProvider>
 				<ShareDecky serverApi={serverApi} />

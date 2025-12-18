@@ -79,7 +79,7 @@ export const getSettings = (): PluginSettings => {
 const sendToast = (serverApi: ServerAPI, title: string, img: string) => {
 	serverApi.toaster.toast({
 		title: title,
-		body: "Open DeckSettings Plugin for details...",
+		body: "Open DeckTuner Plugin for details...",
 		className: staticClasses.FullHeight,
 		playSound: true,
 		sound: 8,
