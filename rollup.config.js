@@ -32,6 +32,9 @@ export default defineConfig({
   external: ['react', 'react-dom','decky-frontend-lib'],
   output: {
     file: 'dist/index.js',
+    // Name the IIFE bundle so consumers (Decky / the page) can access exports via the global
+    // (e.g., `window.DeckTuner`). Use a simple, valid identifier (no hyphens).
+    name: 'DeckTuner',
     globals: {
       react: 'SP_REACT',
       'react-dom': 'SP_REACTDOM',
