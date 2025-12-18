@@ -15,6 +15,10 @@ import {
 	sendShareDeckToast,
 } from "./requests"
 
+// Bump this when debugging Decky load/deploy issues so you can confirm
+// the Steam Deck is actually loading your newest frontend bundle.
+const FRONTEND_BUILD_MARKER = "decktuner-frontend-marker-2025-12-18-a"
+
 // This is a hack to remove ShareDeck-y (the old name for this plugin)
 // if (window.DeckyPluginLoader?.hasPlugin("ShareDeck-y"))
 // 	//@ts-ignore
@@ -38,6 +42,7 @@ const ShareDecky = ({ serverApi }: { serverApi: ServerAPI }) => {
 }
 
 export default (serverApi: ServerAPI) => {
+	console.log(`[DeckTuner] loaded frontend bundle: ${FRONTEND_BUILD_MARKER}`)
 	const onGameChange =
 		SteamClient.GameSessions.RegisterForAppLifetimeNotifications(
 			// Using GameSessions.Register... because Apps.RegisterForGameActionStart
