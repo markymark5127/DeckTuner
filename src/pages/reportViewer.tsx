@@ -1,6 +1,7 @@
 import {
 	ButtonItem,
 	Navigation,
+	Dropdown,
 	PanelSection,
 	PanelSectionRow,
 	Router,
@@ -27,6 +28,8 @@ import {
 import {
 	applyPreset,
 	discoverSteamOsStorage,
+	discoverGameConfigPaths,
+	getDeviceInfo,
 	recordModeStart,
 	recordModeStop,
 } from "../presets/apply"
@@ -50,6 +53,7 @@ const GameReports = () => {
 	const [curatedSource, setCuratedSource] = useState<
 		"network" | "cache" | "none"
 	>("none")
+	const [deviceLabel, setDeviceLabel] = useState<string>("unknown")
 	const [presetCategory, setPresetCategory] =
 		useState<PresetCategory>("battery_saver")
 	const [effectivePreset, setEffectivePreset] = useState<Preset | null>(null)
@@ -61,9 +65,20 @@ const GameReports = () => {
 		null
 	)
 	const [recordResults, setRecordResults] = useState<any[] | null>(null)
+	const [lastDeviceInfo, setLastDeviceInfo] = useState<any | null>(null)
 
 	useEffect(() => {
 		if (typeof selectedGame?.appId === "number") {
+			getDeviceInfo()
+				.then((info: any) => {
+					setLastDeviceInfo(info)
+					const v = info?.steam_deck_variant
+					if (v === "oled") setDeviceLabel("steamdeck_oled")
+					else if (v === "lcd") setDeviceLabel("steamdeck_lcd")
+					else setDeviceLabel("unknown")
+				})
+				.catch(() => setDeviceLabel("unknown"))
+
 			getReports(selectedGame.appId).then((res) => {
 				if (res !== undefined) setReports(res)
 				setLoadingSharedeck(false)
@@ -164,23 +179,31 @@ const GameReports = () => {
 						<div style={{ width: "100%" }}>
 							<div style={{ opacity: 0.75, fontSize: "12px" }}>
 								Curated presets source: {curatedSource}. Active
-								preset source: {presetSource}.
+								preset source: {presetSource}. Device:{" "}
+								{deviceLabel}.
 							</div>
-							<select
-								style={{ width: "100%", marginTop: "8px" }}
-								value={presetCategory}
-								onChange={(e) =>
-									setPresetCategory(
-										e.target.value as PresetCategory
-									)
-								}
-							>
-								<option value="battery_saver">
-									Battery Saver
-								</option>
-								<option value="framerate">Framerate</option>
-								<option value="graphics">Graphics</option>
-							</select>
+							<div style={{ marginTop: "8px" }}>
+								<Dropdown
+									rgOptions={[
+										{
+											data: "battery_saver" satisfies PresetCategory,
+											label: "Battery Saver",
+										},
+										{
+											data: "framerate" satisfies PresetCategory,
+											label: "Framerate",
+										},
+										{
+											data: "graphics" satisfies PresetCategory,
+											label: "Graphics",
+										},
+									]}
+									selectedOption={presetCategory}
+									onChange={(opt) =>
+										setPresetCategory(opt.data as PresetCategory)
+									}
+								/>
+							</div>
 						</div>
 					</PanelSectionRow>
 					<PanelSectionRow>
@@ -395,13 +418,27 @@ const GameReports = () => {
 									onClick={async () => {
 										if (!effectivePreset) return
 										try {
+											const appid = selectedGame.appId!
+											const top = recordResults?.[0]
+											const recordSuggestion =
+												top && top.path
+													? buildRecordSuggestion(
+															appid,
+															top
+													  )
+													: null
+
 											await uploadPresetToService(
 												userSettings.serviceBaseUrl,
 												{
-													appid: selectedGame.appId!,
+													appid,
 													category: presetCategory,
 													preset: effectivePreset,
 													source: presetSource,
+													device: deviceLabel,
+													device_info: lastDeviceInfo,
+													record_suggestion:
+														recordSuggestion,
 												}
 											)
 											toaster.toast({
@@ -456,6 +493,45 @@ const GameReports = () => {
 							}}
 						>
 							Debug: Discover SteamOS Profile Storage
+						</ButtonItem>
+					</PanelSectionRow>
+					<PanelSectionRow>
+						<ButtonItem
+							layout="below"
+							onClick={async () => {
+								try {
+									const appid = selectedGame.appId!
+									const r = await discoverGameConfigPaths(appid)
+									const matches = r.matches?.length ?? 0
+									toaster.toast({
+										title: "Config discovery complete",
+										body: `Matches: ${matches}. See logs for details.`,
+										playSound: true,
+										sound: 8,
+										eType: 0,
+									})
+									// Also surface the top few into the Record results area for quick use.
+									if (Array.isArray(r.matches) && r.matches.length) {
+										const mapped = r.matches.slice(0, 15).map((m: any) => ({
+											path: m.path,
+											change: "candidate",
+											meta: { size: m.size, mtime: m.mtime },
+											diff: null,
+										}))
+										setRecordResults(mapped)
+									}
+								} catch (e: any) {
+									toaster.toast({
+										title: "Config discovery failed",
+										body: e?.message ?? "Unknown error",
+										playSound: true,
+										sound: 8,
+										eType: 2,
+									})
+								}
+							}}
+						>
+							Debug: Discover Game Config Paths
 						</ButtonItem>
 					</PanelSectionRow>
 					{userSettings.enableGraphicsWriter ? (
@@ -733,4 +809,46 @@ export default GameReports
 function openWeb(url: string) {
 	Navigation.NavigateToExternalWeb(url)
 	Router.CloseSideMenus()
+}
+
+function buildRecordSuggestion(appid: number, top: any) {
+	const p: string = top.path
+	const lower = p.toLowerCase()
+	let adapter: any = "ini"
+	if (lower.endsWith(".json")) adapter = "json"
+	else if (lower.endsWith(".cfg")) adapter = "cfg"
+	else if (lower.endsWith(".ini")) adapter = "ini"
+	else adapter = "regex"
+
+	const compatMarker = `/compatdata/${appid}/pfx/`
+	let pathSpec: any = null
+	if (p.includes(compatMarker)) {
+		pathSpec = {
+			type: "proton_prefix",
+			relative: p.split(compatMarker)[1],
+		}
+	} else if (p.includes("/.config/")) {
+		pathSpec = { type: "linux_config", relative: p.split("/.config/")[1] }
+	} else if (p.includes("/.local/share/")) {
+		pathSpec = {
+			type: "linux_share",
+			relative: p.split("/.local/share/")[1],
+		}
+	} else {
+		pathSpec = { type: "absolute", path: p }
+	}
+
+	const patches =
+		top.diff?.changed?.map((c: any) => ({
+			section: c.section,
+			key: c.key,
+			value: c.after,
+		})) ?? []
+
+	return {
+		path: p,
+		adapter,
+		pathSpec,
+		patches,
+	}
 }

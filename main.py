@@ -397,6 +397,165 @@ class Plugin:
         changed.sort(key=score, reverse=True)
         return {"session_id": session_id, "changed": changed[:50], "changed_count": len(changed)}
 
+    async def discover_game_config_paths(self, appid: int):
+        """
+        Best-effort discovery of likely in-game config/settings file paths for a given appid.
+
+        This is read-only. It scans common Steam Deck / SteamOS locations:
+        - Proton prefix config roots for this appid
+        - ~/.config and ~/.local/share
+        - Steam Cloud userdata/<steamid>/<appid>/remote (if present)
+
+        Returns ranked candidates with a suggested DeckTuner pathSpec when possible.
+        """
+        try:
+            home = Path(os.path.expanduser("~"))
+            appid_str = str(appid)
+
+            roots: List[Path] = []
+
+            # Proton prefix roots
+            roots.extend([
+                home / ".local" / "share" / "Steam" / "steamapps" / "compatdata" / appid_str / "pfx" / "drive_c" / "users" / "steamuser" / "AppData" / "Local",
+                home / ".local" / "share" / "Steam" / "steamapps" / "compatdata" / appid_str / "pfx" / "drive_c" / "users" / "steamuser" / "AppData" / "Roaming",
+                home / ".local" / "share" / "Steam" / "steamapps" / "compatdata" / appid_str / "pfx" / "drive_c" / "users" / "steamuser" / "Documents",
+                home / ".local" / "share" / "Steam" / "steamapps" / "compatdata" / appid_str / "pfx" / "drive_c" / "users" / "steamuser" / "Saved Games",
+            ])
+
+            # Native Linux config roots
+            roots.extend([
+                home / ".config",
+                home / ".local" / "share",
+            ])
+
+            # Steam Cloud remote folders (best-effort)
+            userdata_roots = [
+                home / ".local" / "share" / "Steam" / "userdata",
+                home / ".steam" / "steam" / "userdata",
+            ]
+            for uroot in userdata_roots:
+                if not uroot.exists():
+                    continue
+                try:
+                    for steamid_dir in uroot.iterdir():
+                        if not steamid_dir.is_dir():
+                            continue
+                        remote = steamid_dir / appid_str / "remote"
+                        if remote.exists() and remote.is_dir():
+                            roots.append(remote)
+                except Exception:
+                    continue
+
+            # Scan roots with caps
+            max_files = 40_000
+            max_file_size = 5_000_000
+            exts = {".ini", ".cfg", ".json", ".xml", ".txt", ".vdf"}
+
+            candidates: List[Path] = []
+            seen = 0
+            for root in roots:
+                if not root.exists():
+                    continue
+                try:
+                    for p in root.rglob("*"):
+                        if seen >= max_files:
+                            break
+                        seen += 1
+                        try:
+                            if not p.is_file():
+                                continue
+                            if p.suffix.lower() not in exts:
+                                continue
+                            st = p.stat()
+                            if st.st_size > max_file_size:
+                                continue
+                            candidates.append(p)
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+
+            keywords = [
+                "gameusersettings",
+                "settings",
+                "config",
+                "graphics",
+                "video",
+                "renderer",
+                "shadow",
+                "texture",
+                "vsync",
+                "resolution",
+                "fsr",
+                "dlss",
+                "sg.",
+            ]
+
+            def path_spec_for(p: Path) -> Optional[Dict[str, Any]]:
+                s = str(p)
+                compat_marker = f"/compatdata/{appid_str}/pfx/"
+                if compat_marker in s:
+                    return {"type": "proton_prefix", "relative": s.split(compat_marker, 1)[1]}
+                cfg_marker = "/.config/"
+                if cfg_marker in s:
+                    return {"type": "linux_config", "relative": s.split(cfg_marker, 1)[1]}
+                share_marker = "/.local/share/"
+                if share_marker in s:
+                    return {"type": "linux_share", "relative": s.split(share_marker, 1)[1]}
+                return {"type": "absolute", "path": s}
+
+            def score(p: Path) -> float:
+                s = 0.0
+                low = str(p).lower()
+                # filename hints
+                for name in ["gameusersettings.ini", "settings", "config", "graphics", "video", "renderer"]:
+                    if name in low:
+                        s += 2.0
+                # extension hints
+                if low.endswith(".ini"):
+                    s += 1.2
+                elif low.endswith(".json"):
+                    s += 1.0
+                elif low.endswith(".cfg"):
+                    s += 0.9
+                else:
+                    s += 0.3
+                # content hints (best-effort; keep capped)
+                try:
+                    if p.stat().st_size <= 200_000:
+                        txt = p.read_text(errors="ignore").lower()
+                        for k in keywords:
+                            if k in txt:
+                                s += 0.2
+                except Exception:
+                    pass
+                return s
+
+            ranked = sorted(candidates, key=score, reverse=True)[:50]
+            out: List[Dict[str, Any]] = []
+            for p in ranked:
+                try:
+                    st = p.stat()
+                    out.append({
+                        "path": str(p),
+                        "size": int(st.st_size),
+                        "mtime": int(st.st_mtime),
+                        "pathSpec": path_spec_for(p),
+                    })
+                except Exception:
+                    continue
+
+            return {
+                "appid": appid,
+                "roots_scanned": [str(r) for r in roots if r.exists()],
+                "candidate_count": len(candidates),
+                "matches": out,
+                "note": "Best-effort discovery. Use Record Mode to confirm the correct file before curating targets.",
+            }
+        except Exception as e:
+            logger.exception("discover_game_config_paths failed")
+            return {"error": str(e)}
+
     def _snapshot_roots(self, roots: List[str]) -> Dict[str, Dict[str, Any]]:
         snapshot: Dict[str, Dict[str, Any]] = {}
         content_captured = 0

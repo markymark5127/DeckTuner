@@ -1,5 +1,6 @@
 import {
 	ButtonItem,
+	TextField,
 	PanelSection,
 	PanelSectionRow,
 	ToggleField,
@@ -31,49 +32,30 @@ const SettingsPage = () => {
 
 			<PanelSection title="Settings">
 				<PanelSectionRow>
-					<div style={{ width: "100%" }}>
-						<div style={{ fontWeight: 600 }}>
-							Preset CDN Base URL
-						</div>
-						<div style={{ opacity: 0.75, fontSize: "12px" }}>
-							Where curated Battery/Framerate/Graphics presets are
-							fetched from (v1 static JSON).
-						</div>
-						<input
-							style={{ width: "100%", marginTop: "6px" }}
-							type="text"
+						<TextField
+							label="Preset CDN Base URL"
+							description="Where curated Battery/Framerate/Graphics presets are fetched from (v1 static JSON)."
 							value={currentSettings.presetCdnBaseUrl}
 							onChange={(e) =>
 								updateSetting(
 									"presetCdnBaseUrl",
-									e.target.value
+									e.currentTarget.value
 								)
 							}
 						/>
-					</div>
 				</PanelSectionRow>
 				<PanelSectionRow>
-					<div style={{ width: "100%" }}>
-						<div style={{ fontWeight: 600 }}>
-							DeckTuner Service Base URL (v2)
-						</div>
-						<div style={{ opacity: 0.75, fontSize: "12px" }}>
-							Optional. If set, the plugin can open Steam OpenID
-							login to your service and upload presets for
-							community curation.
-						</div>
-						<input
-							style={{ width: "100%", marginTop: "6px" }}
-							type="text"
+						<TextField
+							label="DeckTuner Service Base URL (v2)"
+							description="Optional. If set, the plugin can open Steam OpenID login to your service and upload presets for community curation."
 							value={currentSettings.serviceBaseUrl}
 							onChange={(e) =>
 								updateSetting(
 									"serviceBaseUrl",
-									e.target.value
+									e.currentTarget.value
 								)
 							}
 						/>
-					</div>
 				</PanelSectionRow>
 				<PanelSectionRow>
 					<ToggleField

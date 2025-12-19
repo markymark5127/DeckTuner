@@ -1,5 +1,6 @@
 import {
 	applyPresetBackend,
+	discoverGameConfigPathsBackend,
 	discoverPerfProfileStorage,
 	getDeviceInfoBackend,
 	recordModeStartBackend,
@@ -137,6 +138,10 @@ export async function recordModeStart(appid: number, watchRoots: string[]) {
 
 export async function recordModeStop(sessionId: string) {
 	return await recordModeStopBackend(sessionId)
+}
+
+export async function discoverGameConfigPaths(appid: number) {
+	return await discoverGameConfigPathsBackend(appid)
 }
 
 

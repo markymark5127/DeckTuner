@@ -30,3 +30,8 @@ export const recordModeStopBackend = callable<
 	[session_id: string],
 	{ session_id: string; changed?: any[]; changed_count?: number; error?: string }
 >("record_mode_stop")
+
+export const discoverGameConfigPathsBackend = callable<
+	[appid: number],
+	any
+>("discover_game_config_paths")

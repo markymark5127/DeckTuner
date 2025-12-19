@@ -10,7 +10,7 @@ These presets are fetched by the plugin from a **static JSON CDN** (v1) and are 
 
 ## File layout (CDN)
 
-- `index.json` (optional): list of supported appids and metadata
+- `presets/index.json` (optional): list of supported appids and metadata
 - `presets/<appid>.json`: the curated presets document for a specific Steam appid
 
 ## `presets/<appid>.json` (Schema v1)
@@ -21,10 +21,11 @@ Top-level fields:
 - `appid`: Steam appid (number)
 - `game_name`: optional display name
 - `updated_at`: ISO timestamp
-- `profiles`: required map containing:
+- `profiles`: required **generic fallback** map containing:
   - `battery_saver`
   - `framerate`
   - `graphics`
+- `profiles_by_device` (optional): map of device variant → profiles map. If present, the plugin should prefer the exact device match and fall back to `profiles`.
 
 Each profile:
 

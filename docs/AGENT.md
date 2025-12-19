@@ -17,10 +17,10 @@ This document is written for an “agent” (human or AI) that needs to understa
 
 ## Key product decisions (why the code looks like it does)
 
-- **Curated presets are external (v1)**: v1 expects a static CDN of JSON docs (`presets/<appid>.json`). This avoids needing accounts, moderation, or a backend service on day 1.\n
-- **Applying in-game settings is optional**: it’s behind `enableGraphicsWriter` and uses adapters + backups. Many games store settings differently, so the design is intentionally best-effort.\n
-- **Steam identity is Steam OpenID**: ShareDeck uses Steam identity; DeckTuner’s v2 service should too. Inside the plugin, “login” is implemented by opening a URL in Steam’s browser.\n
-- **SteamOS per-game performance apply is risk-heavy**: there is a guarded “try via SteamClient” attempt plus a backend **discovery** tool. Final deterministic writing depends on what SteamOS stores and how it can be safely updated.\n
+- **Curated presets are external (v1)**: v1 expects a static CDN of JSON docs (`presets/<appid>.json`). This avoids needing accounts, moderation, or a backend service on day 1.
+- **Applying in-game settings is optional**: it’s behind `enableGraphicsWriter` and uses adapters + backups. Many games store settings differently, so the design is intentionally best-effort.
+- **Steam identity is Steam OpenID**: ShareDeck uses Steam identity; DeckTuner’s v2 service should too. Inside the plugin, “login” is implemented by opening a URL in Steam’s browser.
+- **SteamOS per-game performance apply is risk-heavy**: there is a guarded “try via SteamClient” attempt plus a backend **discovery** tool. Final deterministic writing depends on what SteamOS stores and how it can be safely updated.
 
 ## Current architecture
 
@@ -28,7 +28,7 @@ This document is written for an “agent” (human or AI) that needs to understa
 flowchart TD
   UI[Decky_UI_React] -->|fetch curated presets| PresetCDN[Static_JSON_CDN]
   UI -->|local override| LocalStore[SteamClient_Storage_or_localStorage]
-  UI -->|callPluginMethod| Backend[Python_Backend_main.py]
+  UI -->|@decky/api_callable| Backend[Python_Backend_main.py]
   Backend -->|patch config files| FS[Filesystem]
   UI -->|optional SteamClient setters| SteamClientAPI[SteamClient_Perf_APIs]
 ```
@@ -96,15 +96,15 @@ Next:
 
 ## Known risks / “gotchas”
 
-- **SteamOS per-game performance storage changes** across SteamOS updates. Always keep a discovery path and avoid hard-coding without validation.\n
-- **In-game configs** are inconsistent; some games overwrite settings on exit, some use cloud sync.\n
-- **Proton prefixes** can be large—Record Mode is scoped to likely directories, and snapshots are capped.\n
-- **INI formatting**: `configparser` rewrites files; for strict games, use regex adapter.\n
+- **SteamOS per-game performance storage changes** across SteamOS updates. Always keep a discovery path and avoid hard-coding without validation.
+- **In-game configs** are inconsistent; some games overwrite settings on exit, some use cloud sync.
+- **Proton prefixes** can be large—Record Mode is scoped to likely directories, and snapshots are capped.
+- **INI formatting**: `configparser` rewrites files; for strict games, use regex adapter.
 
 ## Contributing guidelines (practical)
 
-- Add new adapters cautiously; always backup before write.\n
-- Keep UI non-destructive: show what will change; prefer “best-effort” with clear errors.\n
-- Keep the preset schema stable (version it) so CDN docs don’t break old plugin versions.\n
+- Add new adapters cautiously; always backup before write.
+- Keep UI non-destructive: show what will change; prefer “best-effort” with clear errors.
+- Keep the preset schema stable (version it) so CDN docs don’t break old plugin versions.
 
 

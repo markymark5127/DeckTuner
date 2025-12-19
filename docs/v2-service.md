@@ -23,7 +23,15 @@ Accepts a user-submitted preset payload:
   "appid": 123456,
   "category": "battery_saver",
   "preset": { "label": "Battery Saver", "steamos": { "fpsLimit": 30 } },
-  "source": "override"
+  "source": "override",
+  "device": "steamdeck_oled",
+  "device_info": { "steam_deck_variant": "oled" },
+  "record_suggestion": {
+    "path": "/home/deck/.local/share/Steam/steamapps/compatdata/123456/pfx/drive_c/users/steamuser/AppData/Local/Game/Config.ini",
+    "adapter": "ini",
+    "pathSpec": { "type": "proton_prefix", "relative": "drive_c/users/steamuser/AppData/Local/Game/Config.ini" },
+    "patches": [{ "section": null, "key": "sg.ShadowQuality", "value": "1" }]
+  }
 }
 ```
 

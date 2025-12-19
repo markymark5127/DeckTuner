@@ -22,71 +22,42 @@ ShareDeck             |  SteamDeckHQ
 :-------------------------:|:-------------------------:
 ![](screenshots/003_sharedeck_report.png)  |  ![](screenshots/004_sdhq_report.png)
 
-## Installing on Steam Deck
+## Curated presets via GitHub Pages
 
-### Recommended environment
+DeckTuner fetches curated presets from:
 
-- Node >= 18 (LTS) — this repo's CI and dev tooling target Node 18+
-- pnpm (or npm) — prefer pnpm for reproducible installs
+- `<presetCdnBaseUrl>/presets/<appid>.json`
 
-> If you build directly on the Deck, use Desktop Mode and install Node 18 from the SteamOS package manager or use a container. See the "Build & Deploy on Steam Deck" section below for commands.
+This repo includes a GitHub Actions workflow that publishes those JSON files to GitHub Pages:
 
-## Build & Deploy on Steam Deck
+- Workflow: `.github/workflows/publish-presets.yml`
+- Input source: `curation/presets.source.json`
+- Generator: `scripts/generate-presets.mjs`
+- Output (served by Pages): `presets/index.json` and `presets/<appid>.json`
 
-This project is intended to run on a Steam Deck with Decky Loader. Two approaches are supported.
+### Enable it
 
-### Option A — Build and deploy directly on the Deck (recommended)
+1. In GitHub: **Settings → Pages**
+2. Set **Source** to **GitHub Actions**
+3. Run the workflow **“Publish curated presets (GitHub Pages)”** (or push to `main`)
 
-1. In Desktop Mode, open Konsole and install Node 18 + pnpm (if needed):
+### Configure the plugin
 
-```bash
-# example: install Node 18 via package manager (varies by SteamOS version)
-sudo apt update && sudo apt install -y nodejs npm
-# then install pnpm
-npm i -g pnpm
-```
+In DeckTuner → Settings, set:
 
-2. Clone and build:
+- **Preset CDN Base URL** to your Pages site base, for example:
+  - `https://<your_github_user>.github.io/<your_repo>`
 
-```bash
-cd ~/homebrew/plugins
-git clone <YOUR_REPO_URL> DeckTuner
-cd DeckTuner
-pnpm install
-pnpm run build
-```
-
-3. Restart Decky Loader (or reboot) and open the plugin in Gaming Mode.
-
-### Option B — Build locally and copy to the Deck
-
-1. On your PC or CI:
-
-```bash
-pnpm install
-pnpm run build
-```
-
-2. Copy the plugin folder to the Deck (example):
-
-```bash
-scp -r . deck@<STEAM_DECK_IP>:~/homebrew/plugins/DeckTuner
-```
-
-3. On Deck, restart Decky Loader (or reboot) and open the plugin.
-
-
-## Installing on Steam Deck
+## Build & deploy on Steam Deck
 
 ### Prereqs
 
 - Decky Loader installed
 - Steam Deck in Desktop Mode
-- Optional: SSH enabled (recommended)
+- Node 18+ (this repo targets Node 18+; newer versions may show engine warnings)
+- npm or pnpm
 
 ### Option A (recommended): build directly on the Deck
-
-1. On the Deck, open **Konsole** and install the plugin folder:
 
 ```bash
 cd ~/homebrew/plugins
@@ -96,28 +67,15 @@ npm install
 npm run build
 ```
 
-2. Restart Decky Loader:
-   - easiest: reboot, or
-   - in Desktop Mode, restart the Decky service (method varies by install)
-
-3. Open Gaming Mode → Quick Access Menu → Decky → **DeckTuner**
+Then restart Decky Loader (or reboot) and open Gaming Mode → Quick Access Menu → Decky → **DeckTuner**.
 
 ### Option B: build on your PC, copy to the Deck (SSH)
-
-1. Build on your PC:
 
 ```bash
 npm install
 npm run build
-```
-
-2. Copy the whole plugin folder to the Deck (example):
-
-```bash
 scp -r . deck@<STEAM_DECK_IP>:~/homebrew/plugins/DeckTuner
 ```
-
-3. On the Deck, restart Decky Loader (or reboot) and open the plugin.
 
 ## Using presets
 
@@ -148,7 +106,16 @@ Record Mode reference: `docs/record-mode.md`.
 
 ## Curation tooling (v1)
 
-This repo includes a minimal curator that turns ShareDeck reports into 3 representative presets:
+This repo includes multiple ways to create preset files:
+
+### Manual source + GitHub Pages (recommended)
+
+- Edit `curation/presets.source.json`
+- Run `npm run presets:build` locally (or let GitHub Actions publish)
+
+### Legacy Python curator (optional)
+
+A minimal curator that turns ShareDeck reports into 3 representative presets:
 
 ```bash
 python tools/curate_presets.py --appid 620 --out presets/620.json
