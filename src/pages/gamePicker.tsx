@@ -3,7 +3,7 @@ import {
 	PanelSection,
 	PanelSectionRow,
 	Router,
-} from "decky-frontend-lib"
+} from "@decky/ui"
 import { useContext, useEffect, useState } from "react"
 
 import LoadingPanel from "../components/loadingPanel"

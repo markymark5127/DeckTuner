@@ -1,10 +1,5 @@
-import {
-	Navigation,
-	QuickAccessTab,
-	ServerAPI,
-	SideMenu,
-	staticClasses,
-} from "decky-frontend-lib"
+import { Navigation, QuickAccessTab, staticClasses } from "@decky/ui"
+import { fetchNoCors, toaster } from "@decky/api"
 
 import sdhqlogo from "../assets/sdhqlogo.jpg"
 import sharedecklogo from "../assets/sharedecklogo.png"
@@ -13,43 +8,33 @@ import { PluginSettings, Report, ReportInterface } from "./context"
 import { SDHQReport } from "./pages/sdhqReport"
 
 export const getReports = async (
-	appId: number | string,
-	serverApi: ServerAPI
+	appId: number | string
 ) => {
-	const url = SHAREDECK_REPORT_ENDPOINT.replaceAll("${appid}", `${appId}`)
-	const res = await serverApi.fetchNoCors<{ body: string }>(url, {
-		method: "GET",
-	})
+	const url = SHAREDECK_REPORT_ENDPOINT.replace("${appid}", `${appId}`)
+	const res = await fetchNoCors(url, { method: "GET" })
+	if (!res.ok) return []
 
-	if (res.success) {
-		const reports = JSON.parse(res.result.body) as ReportInterface[]
-		return reports.map((reportData) => new Report(reportData))
-	} else {
-		return []
-	}
+	const text = await res.text()
+	const reports = JSON.parse(text) as ReportInterface[]
+	return reports.map((reportData) => new Report(reportData))
 }
 
 export const getSDHQReview = async (
 	appId: number | string,
-	serverApi: ServerAPI,
 	fields: string[]
 ) => {
-	const url = SDHQ_REPORT_ENDPOINT.replaceAll("${appid}", `${appId}`)
+	const url = SDHQ_REPORT_ENDPOINT.replace("${appid}", `${appId}`)
 	const fieldsParam = `&_fields=${fields.join()}`
 
-	const res = await serverApi.fetchNoCors<{ body: string }>(
-		`${url}${fieldsParam}`,
-		{
-			headers: { "User-Agent": "PostmanRuntime/7.30.0" },
-			method: "GET",
-		}
-	)
+	const res = await fetchNoCors(`${url}${fieldsParam}`, {
+		headers: { "User-Agent": "PostmanRuntime/7.30.0" },
+		method: "GET",
+	})
+	if (!res.ok) return null
 
-	if (res.success) {
-		const reports = JSON.parse(res.result.body) as Partial<SDHQReport>[]
-		if (reports.length > 0) return reports[0]
-	}
-	return null
+	const text = await res.text()
+	const reports = JSON.parse(text) as Partial<SDHQReport>[]
+	return reports.length > 0 ? reports[0] : null
 }
 
 const getLocalStorageItem = <T,>(key: string, def: T): T => {
@@ -69,13 +54,18 @@ export const getSettings = (): PluginSettings => {
 		showSDHQToasts: true,
 		showAlways: false,
 		showAllApps: false,
+		presetCdnBaseUrl:
+			"https://example.invalid/decktuner-presets/v1", // user configurable
+		serviceBaseUrl: "",
+		enableGraphicsWriter: false,
+		enableSteamOsApply: true,
 	})
 }
 
-const sendToast = (serverApi: ServerAPI, title: string, img: string) => {
-	serverApi.toaster.toast({
+const sendToast = (title: string, img: string) => {
+	toaster.toast({
 		title: title,
-		body: "Open DeckSettings Plugin for details...",
+		body: "Open DeckTuner Plugin for details...",
 		className: staticClasses.FullHeight,
 		playSound: true,
 		sound: 8,
@@ -89,10 +79,10 @@ const sendToast = (serverApi: ServerAPI, title: string, img: string) => {
 	})
 }
 
-export const sendShareDeckToast = (serverApi: ServerAPI) => {
-	sendToast(serverApi, "ShareDeck Reports Available", sharedecklogo)
+export const sendShareDeckToast = () => {
+	sendToast("ShareDeck Reports Available", sharedecklogo)
 }
 
-export const sendSDHQToast = (serverApi: ServerAPI) => {
-	sendToast(serverApi, "SteamDeckHQ Review Available", sdhqlogo)
+export const sendSDHQToast = () => {
+	sendToast("SteamDeckHQ Review Available", sdhqlogo)
 }

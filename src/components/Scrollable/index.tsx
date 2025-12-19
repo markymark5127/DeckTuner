@@ -1,11 +1,10 @@
-import { FC, ForwardRefExoticComponent } from "react"
+import { FC } from "react"
 import {
 	Focusable,
 	FocusableProps,
 	GamepadEvent,
 	GamepadButton,
-	ServerAPI,
-} from "decky-frontend-lib"
+} from "@decky/ui"
 import React, { useRef } from "react"
 
 const DEFAULTSCROLLSPEED = 50
@@ -13,31 +12,30 @@ const DEFAULTSCROLLSPEED = 50
 export interface ScrollableElement extends HTMLDivElement {}
 
 export function scrollableRef() {
-	return useRef<ScrollableElement>(null)
+	return useRef<ScrollableElement | null>(null)
 }
 
-export const Scrollable: ForwardRefExoticComponent<any> = React.forwardRef(
-	(props, ref) => {
-		if (!props.style) {
-			props.style = {}
-		}
-		// props.style.minHeight = '100%';
-		// props.style.maxHeight = '80%';
-		props.style.height = "95vh"
-		props.style.overflowY = "scroll"
+export const Scrollable = React.forwardRef<
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => {
+	const nextProps = { ...props } as React.HTMLAttributes<HTMLDivElement>
+	nextProps.style = { ...(nextProps.style ?? {}) }
+	// nextProps.style.minHeight = '100%';
+	// nextProps.style.maxHeight = '80%';
+	nextProps.style.height = "95vh"
+	nextProps.style.overflowY = "scroll"
 
-		return (
-			<React.Fragment>
-				<div ref={ref} {...props} />
-			</React.Fragment>
-		)
-	}
-)
+	return (
+		<React.Fragment>
+			<div ref={ref} {...nextProps} />
+		</React.Fragment>
+	)
+})
 
 interface ScrollAreaProps extends FocusableProps {
-	scrollable: React.RefObject<ScrollableElement>
+	scrollable: React.RefObject<ScrollableElement | null>
 	scrollSpeed?: number
-	serverApi?: ServerAPI
 }
 
 // const writeLog = async (serverApi: ServerAPI, content: any) => {
@@ -47,10 +45,10 @@ interface ScrollAreaProps extends FocusableProps {
 
 const scrollOnDirection = (
 	e: GamepadEvent,
-	ref: React.RefObject<ScrollableElement>,
+	ref: React.RefObject<ScrollableElement | null>,
 	amt: number,
-	prev: React.RefObject<HTMLDivElement>,
-	next: React.RefObject<HTMLDivElement>
+	prev: React.RefObject<HTMLDivElement | null>,
+	next: React.RefObject<HTMLDivElement | null>
 ) => {
 	let childNodes = ref.current?.childNodes
 	let currentIndex = null

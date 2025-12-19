@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "schema": "decktuner-curation-source-v1",
+    "generated_note": "Edit this file to add/update curated presets. The GitHub Action will generate `presets/{appid}.json` for GitHub Pages."
+  },
+  "apps": [
+    {
+      "appid": 620,
+      "game_name": "Portal 2 (example - replace me)",
+      "updated_at": "1970-01-01T00:00:00Z",
+      "device_targets": {
+        "steamdeck_oled": true,
+        "steamdeck_lcd": true
+      },
+      "profiles": {
+        "battery_saver": {
+          "label": "Battery Saver",
+          "notes": "Example preset. Replace with real values.",
+          "steamos": {
+            "perGameProfile": true,
+            "fpsLimit": 30,
+            "refreshRateHz": 60,
+            "tdpLimitW": 10,
+            "halfRateShading": true
+          }
+        },
+        "framerate": {
+          "label": "Framerate",
+          "notes": "Example preset. Replace with real values.",
+          "steamos": {
+            "perGameProfile": true,
+            "fpsLimit": 40,
+            "refreshRateHz": 40,
+            "tdpLimitW": 12
+          }
+        },
+        "graphics": {
+          "label": "Graphics",
+          "notes": "Example preset. Replace with real values.",
+          "requiresRestart": true,
+          "graphics": {
+            "applyMode": "best_effort",
+            "targets": []
+          }
+        }
+      },
+      "source": {
+        "provider": "decktuner",
+        "ranking": {
+          "strategy": "manual",
+          "score": 1
+        }
+      }
+    }
+  ]
+}
+
+

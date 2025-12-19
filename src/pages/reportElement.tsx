@@ -4,7 +4,7 @@ import {
 	gamepadDialogClasses,
 	joinClassNames,
 	PanelSectionRow,
-} from "decky-frontend-lib"
+} from "@decky/ui"
 import { Report, ShareDeckTable } from "../context"
 
 const FieldWithSeparator = joinClassNames(
@@ -36,7 +36,7 @@ export function TableItem({
 				</div>
 				<div
 					style={{ textAlign: "right" }}
-					className={gamepadDialogClasses.FieldChildren}
+					className={gamepadDialogClasses.FieldChildrenInner}
 				>
 					{`${value}`}
 				</div>

@@ -1,4 +1,4 @@
-import { DialogButton, PanelSectionRow } from "decky-frontend-lib"
+import { DialogButton, PanelSectionRow } from "@decky/ui"
 
 type BackButtonProps = {
 	onClick: () => void

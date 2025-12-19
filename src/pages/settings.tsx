@@ -1,9 +1,10 @@
 import {
 	ButtonItem,
+	TextField,
 	PanelSection,
 	PanelSectionRow,
 	ToggleField,
-} from "decky-frontend-lib"
+} from "@decky/ui"
 import React, { useContext, useState } from "react"
 
 import BackButton from "../components/backButton"
@@ -12,21 +13,17 @@ import { getSettings, sendSDHQToast, sendShareDeckToast } from "../requests"
 
 const SettingsPage = () => {
 	const [currentSettings, setCurrentSettings] = useState(() => getSettings())
-	const { serverApi, setShowSettings } = useContext(ShareDeckContext)
+	const { setShowSettings } = useContext(ShareDeckContext)
 
 	const updateSetting = (label: keyof PluginSettings, value: any) => {
-		currentSettings[label] = value
-		window.localStorage.setItem(
-			"sharedecky-settings",
-			JSON.stringify(currentSettings)
-		)
-		setCurrentSettings(Object.assign({}, currentSettings))
+		const next = { ...currentSettings, [label]: value } as PluginSettings
+		window.localStorage.setItem("sharedecky-settings", JSON.stringify(next))
+		setCurrentSettings(next)
 	}
 
 	const sendToasts = () => {
-		if (!serverApi) return
-		if (currentSettings.showShareDeckToasts) sendShareDeckToast(serverApi)
-		if (currentSettings.showSDHQToasts) sendSDHQToast(serverApi)
+		if (currentSettings.showShareDeckToasts) sendShareDeckToast()
+		if (currentSettings.showSDHQToasts) sendSDHQToast()
 	}
 
 	return (
@@ -34,6 +31,50 @@ const SettingsPage = () => {
 			<BackButton onClick={() => setShowSettings(false)} />
 
 			<PanelSection title="Settings">
+				<PanelSectionRow>
+						<TextField
+							label="Preset CDN Base URL"
+							description="Where curated Battery/Framerate/Graphics presets are fetched from (v1 static JSON)."
+							value={currentSettings.presetCdnBaseUrl}
+							onChange={(e) =>
+								updateSetting(
+									"presetCdnBaseUrl",
+									e.currentTarget.value
+								)
+							}
+						/>
+				</PanelSectionRow>
+				<PanelSectionRow>
+						<TextField
+							label="DeckTuner Service Base URL (v2)"
+							description="Optional. If set, the plugin can open Steam OpenID login to your service and upload presets for community curation."
+							value={currentSettings.serviceBaseUrl}
+							onChange={(e) =>
+								updateSetting(
+									"serviceBaseUrl",
+									e.currentTarget.value
+								)
+							}
+						/>
+				</PanelSectionRow>
+				<PanelSectionRow>
+					<ToggleField
+						checked={currentSettings.enableSteamOsApply}
+						label="Enable SteamOS Apply (Performance)"
+						description="When enabled, the plugin will attempt to apply per-game SteamOS performance settings when you apply a preset."
+						onChange={(n) => updateSetting("enableSteamOsApply", n)}
+					/>
+				</PanelSectionRow>
+				<PanelSectionRow>
+					<ToggleField
+						checked={currentSettings.enableGraphicsWriter}
+						label="Enable Graphics Writer (Experimental)"
+						description="When enabled, presets may attempt best-effort in-game config edits (requires restart)."
+						onChange={(n) =>
+							updateSetting("enableGraphicsWriter", n)
+						}
+					/>
+				</PanelSectionRow>
 				<PanelSectionRow>
 					<ToggleField
 						checked={currentSettings.showAllApps}
@@ -68,13 +109,11 @@ const SettingsPage = () => {
 						onChange={(n) => updateSetting("showAlways", !n)}
 					/>
 				</PanelSectionRow>
-				{serverApi ? (
-					<PanelSectionRow>
-						<ButtonItem layout="below" onClick={() => sendToasts()}>
-							Test Notifications
-						</ButtonItem>
-					</PanelSectionRow>
-				) : null}
+				<PanelSectionRow>
+					<ButtonItem layout="below" onClick={() => sendToasts()}>
+						Test Notifications
+					</ButtonItem>
+				</PanelSectionRow>
 			</PanelSection>
 		</React.Fragment>
 	)

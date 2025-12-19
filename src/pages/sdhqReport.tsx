@@ -1,6 +1,6 @@
 import { Table } from "./reportElement"
 import { ShareDeckTable } from "../context"
-import { PanelSection, PanelSectionRow } from "decky-frontend-lib"
+import { PanelSection, PanelSectionRow } from "@decky/ui"
 import React from "react"
 
 export type SDHQReport = {
@@ -40,7 +40,7 @@ export function SDHQReportElement({ report }: { report: SDHQReport }) {
 			))}
 			<div style={{ height: "10px" }} />
 			<PanelSectionRow>
-				{removeHTMLTags(report.excerpt.rendered).replaceAll("[…]", "…")}
+				{removeHTMLTags(report.excerpt.rendered).split("[…]").join("…")}
 			</PanelSectionRow>
 		</PanelSection>
 	)
